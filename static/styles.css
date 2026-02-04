@@ -1,0 +1,6 @@
+#map-container { border: 1px solid #ccc; max-width: 100%; }
+svg { width: 100%; height: auto; }
+path { fill: #eee; stroke: #000; cursor: pointer; }
+.correct { fill: green; }
+.error { fill: red; transition: fill 1s; }
+#ui { margin-top: 20px; }
