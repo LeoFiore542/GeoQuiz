@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <title>Geo Quiz Game</title>
+  <link rel="stylesheet" href="./static/styles.css">
+</head>
+<body>
+  <h1>Indovina le Entità Geografiche</h1>
+  <select id="map-select">
+    <option value="">Seleziona una mappa</option>
+    <!-- Opzioni caricate da JS -->
+  </select>
+  <div id="map-container"></div>
+  <div id="ui" style="display:none;">
+    <p>Punteggio: <span id="score">0</span> / <span id="total">0</span></p>
+    <p>Errori: <span id="errors">0</span></p>
+    <input type="text" id="entity-input" placeholder="Inserisci nome">
+    <button id="submit-btn">Conferma</button>
+    <div id="message"></div>
+  </div>
+  <script src="./config.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
