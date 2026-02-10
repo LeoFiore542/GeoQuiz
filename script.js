@@ -13,10 +13,9 @@ let entities = [];
 let score = 0;
 let errors = 0;
 let selectedEntity = null;
-let isPopupVisible = false;
-const popup = document.getElementById('input-popup');
 const popupInput = document.getElementById('entity-input');
 const messageDiv = document.getElementById('message');
+const inputSection = document.getElementById('input-section');
 
 // Evento cambio mappa
 select.addEventListener('change', (e) => {
@@ -30,33 +29,10 @@ select.addEventListener('change', (e) => {
   document.getElementById('errors').textContent = errors;
   document.getElementById('total').textContent = currentMap.total;
   document.getElementById('ui').style.display = 'block';
+  inputSection.style.display = 'flex';
   messageDiv.textContent = '';
   messageDiv.className = 'message';
   loadMap(currentMap.svg, currentMap.data);
-});
-
-// Funzione per mostrare/nascondere popup
-function showPopup(x, y) {
-  popup.style.display = 'block';
-  popup.style.left = Math.min(x, window.innerWidth - 270) + 'px';
-  popup.style.top = (y - 60) + 'px';
-  isPopupVisible = true;
-  popupInput.value = '';
-  popupInput.focus();
-  popupInput.select();
-}
-
-function hidePopup() {
-  popup.style.display = 'none';
-  isPopupVisible = false;
-}
-
-// Movimento popup con mouse
-document.addEventListener('mousemove', (e) => {
-  if (isPopupVisible && selectedEntity) {
-    popup.style.left = Math.min(e.clientX - 50, window.innerWidth - 270) + 'px';
-    popup.style.top = (e.clientY - 60) + 'px';
-  }
 });
 
 // Funzione per caricare SVG e dati (modulare)
@@ -100,11 +76,9 @@ async function loadMap(svgUrl, dataUrl) {
   const paths = svgElement.querySelectorAll('path');
   paths.forEach(path => {
     path.addEventListener('click', (e) => {
-      e.stopPropagation();
       if (path.classList.contains('correct')) return;
       selectedEntity = path.id;
-      // Mostra popup al click del mouse
-      showPopup(e.clientX, e.clientY);
+      popupInput.focus();
     });
   });
 }
@@ -149,10 +123,10 @@ function submitAnswer() {
     path.classList.add('error');
     setTimeout(() => path.classList.remove('error'), 1000);
   }
-  hidePopup();
+  popupInput.value = '';
 }
 
-// Submit con Enter
+// Submit con Enter o click bottone
 popupInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     e.preventDefault();
@@ -160,9 +134,4 @@ popupInput.addEventListener('keypress', (e) => {
   }
 });
 
-// Chiudi popup cliccando fuori
-document.addEventListener('click', (e) => {
-  if (isPopupVisible && !popup.contains(e.target)) {
-    hidePopup();
-  }
-});
+document.getElementById('submit-btn').addEventListener('click', submitAnswer);

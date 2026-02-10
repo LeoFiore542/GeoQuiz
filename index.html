@@ -8,6 +8,7 @@
 </head>
 <body>
   <div class="container">
+    <div class="version-badge">v0.1</div>
     <header>
       <h1>🌍 Geo Quiz Game</h1>
       <p class="subtitle">Metti alla prova le tue conoscenze geografiche</p>
@@ -39,10 +40,9 @@
       <div id="map-container"></div>
     </div>
 
-    <!-- Popup dinamico -->
-    <div id="input-popup" class="input-popup" style="display:none;">
-      <input type="text" id="entity-input" placeholder="Inserisci il nome..." autocomplete="off">
-      <div class="popup-hint">Premi INVIO per confermare</div>
+    <div id="input-section" class="input-section" style="display:none;">
+      <input type="text" id="entity-input" placeholder="Inserisci il nome della regione..." autocomplete="off">
+      <button id="submit-btn">Conferma</button>
     </div>
   </div>
 

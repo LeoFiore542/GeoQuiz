@@ -14,12 +14,26 @@ body {
 .container {
   max-width: 1000px;
   margin: 0 auto;
+  position: relative;
 }
 
 header {
   text-align: center;
   color: white;
   margin-bottom: 30px;
+}
+
+.version-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
 }
 
 header h1 {
@@ -172,38 +186,49 @@ path:hover {
   transition: fill 0.3s;
 }
 
-.input-popup {
-  position: fixed;
+.input-section {
   background: white;
-  border: 2px solid #667eea;
-  border-radius: 8px;
-  padding: 15px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  min-width: 250px;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 10px;
 }
 
-.input-popup input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
+.input-section input {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #667eea;
   border-radius: 6px;
   font-size: 1em;
-  margin-bottom: 8px;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.input-popup input:focus {
+.input-section input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #764ba2;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.popup-hint {
-  font-size: 0.85em;
-  color: #999;
-  text-align: center;
-  font-style: italic;
+.input-section button {
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.input-section button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.input-section button:active {
+  transform: translateY(0);
 }
 
 /* Etichette sui path della mappa */
