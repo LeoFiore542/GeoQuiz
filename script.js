@@ -40,9 +40,19 @@ async function loadMap(svgUrl, dataUrl) {
   // Carica SVG
   const response = await fetch(svgUrl);
   const svgText = await response.text();
-  document.getElementById('map-container').innerHTML = svgText;
-  const svgElement = document.querySelector('svg');
+  const mapContainer = document.getElementById('map-container');
+  mapContainer.innerHTML = svgText;
+  
+  // Attendi un frame per assicurarsi che il DOM sia aggiornato
+  await new Promise(resolve => setTimeout(resolve, 10));
+  
+  const svgElement = document.querySelector('#map-container svg');
+  if (!svgElement) {
+    console.error('SVG non trovato nel DOM');
+    return;
+  }
   svgElement.id = 'current-map';
+  console.log('SVG caricato:', svgElement);
 
   // Proviamo a caricare dati JSON; se non ci sono, ricaviamo i nomi direttamente dagli attributi `name` dei path SVG
   let loadedFromJson = false;
@@ -66,23 +76,29 @@ async function loadMap(svgUrl, dataUrl) {
       name: p.getAttribute('name') || p.id,
       aliases: []
     }));
+    console.log('Entità caricate:', entities.length);
   }
 
   // Aggiorna il totale dinamicamente se non specificato in config
   if (!currentMap.total) currentMap.total = entities.length;
   document.getElementById('total').textContent = currentMap.total;
 
-  // Aggiungi eventi click ai path
-  const paths = svgElement.querySelectorAll('path');
-  paths.forEach(path => {
-    path.style.pointerEvents = 'auto';
-    path.addEventListener('click', function(e) {
-      e.stopPropagation();
-      if (this.classList.contains('correct')) return;
-      selectedEntity = this.id;
-      console.log('Regione selezionata:', selectedEntity);
-      popupInput.focus();
-    });
+  // Aggiungi listener globale al container SVG con event delegation
+  svgElement.addEventListener('click', function(e) {
+    const path = e.target.closest('path');
+    if (!path) return;
+    
+    e.stopPropagation();
+    console.log('Click rilevato su:', path.id);
+    
+    if (path.classList.contains('correct')) {
+      console.log('Saltato - già corretto');
+      return;
+    }
+    
+    selectedEntity = path.id;
+    console.log('Regione selezionata:', selectedEntity);
+    popupInput.focus();
   });
 }
 
