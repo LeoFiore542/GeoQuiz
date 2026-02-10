@@ -73,7 +73,7 @@ async function loadMap(svgUrl, dataUrl) {
     const svgPaths = svgElement.querySelectorAll('path');
     entities = Array.from(svgPaths).map(p => ({
       id: p.id,
-      name: p.getAttribute('name') || p.id,
+      name: p.getAttribute('title') || p.getAttribute('name') || p.id,
       aliases: []
     }));
   }
