@@ -100,6 +100,7 @@ async function loadMap(svgUrl, dataUrl) {
   const paths = svgElement.querySelectorAll('path');
   paths.forEach(path => {
     path.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (path.classList.contains('correct')) return;
       selectedEntity = path.id;
       // Mostra popup al click del mouse
