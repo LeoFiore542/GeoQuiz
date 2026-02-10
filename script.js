@@ -16,6 +16,8 @@ let selectedEntity = null;
 const popupInput = document.getElementById('entity-input');
 const messageDiv = document.getElementById('message');
 const inputSection = document.getElementById('input-section');
+const gameArea = document.getElementById('game-area');
+const regionsPanel = document.getElementById('regions-panel');
 
 // Evento cambio mappa
 select.addEventListener('change', (e) => {
@@ -29,6 +31,7 @@ select.addEventListener('change', (e) => {
   document.getElementById('errors').textContent = errors;
   document.getElementById('total').textContent = currentMap.total;
   document.getElementById('ui').style.display = 'block';
+  gameArea.style.display = 'flex';
   inputSection.style.display = 'flex';
   messageDiv.textContent = '';
   messageDiv.className = 'message';
@@ -44,17 +47,16 @@ async function loadMap(svgUrl, dataUrl) {
   mapContainer.innerHTML = svgText;
   
   // Attendi un frame per assicurarsi che il DOM sia aggiornato
-  await new Promise(resolve => setTimeout(resolve, 10));
+  await new Promise(resolve => setTimeout(resolve, 50));
   
   const svgElement = document.querySelector('#map-container svg');
   if (!svgElement) {
-    console.error('SVG non trovato nel DOM');
+    console.error('SVG non trovato');
     return;
   }
   svgElement.id = 'current-map';
-  console.log('SVG caricato:', svgElement);
 
-  // Proviamo a caricare dati JSON; se non ci sono, ricaviamo i nomi direttamente dagli attributi `name` dei path SVG
+  // Proviamo a caricare dati JSON
   let loadedFromJson = false;
   try {
     const dataResponse = await fetch(dataUrl);
@@ -76,29 +78,42 @@ async function loadMap(svgUrl, dataUrl) {
       name: p.getAttribute('name') || p.id,
       aliases: []
     }));
-    console.log('Entità caricate:', entities.length);
   }
 
-  // Aggiorna il totale dinamicamente se non specificato in config
+  // Aggiorna il totale
   if (!currentMap.total) currentMap.total = entities.length;
   document.getElementById('total').textContent = currentMap.total;
 
-  // Aggiungi listener globale al container SVG con event delegation
-  svgElement.addEventListener('click', function(e) {
-    const path = e.target.closest('path');
-    if (!path) return;
+  // Genera i bottoni per le regioni
+  regionsPanel.innerHTML = '';
+  entities.forEach(entity => {
+    const btn = document.createElement('button');
+    btn.className = 'region-btn';
+    btn.textContent = entity.name;
+    btn.dataset.entityId = entity.id;
     
-    e.stopPropagation();
-    console.log('Click rilevato su:', path.id);
+    btn.addEventListener('click', () => {
+      // Rimuovi selezione precedente
+      document.querySelectorAll('.region-btn').forEach(b => {
+        b.classList.remove('selected');
+      });
+      
+      // Nuovo elemento selezionato
+      btn.classList.add('selected');
+      selectedEntity = entity.id;
+      popupInput.focus();
+      
+      // Evidenzia sulla mappa
+      const paths = svgElement.querySelectorAll('path');
+      paths.forEach(p => p.style.opacity = '0.4');
+      const selectedPath = svgElement.getElementById(entity.id);
+      if (selectedPath) {
+        selectedPath.style.opacity = '1';
+        selectedPath.style.filter = 'drop-shadow(0 0 8px rgba(102, 126, 234, 0.8))';
+      }
+    });
     
-    if (path.classList.contains('correct')) {
-      console.log('Saltato - già corretto');
-      return;
-    }
-    
-    selectedEntity = path.id;
-    console.log('Regione selezionata:', selectedEntity);
-    popupInput.focus();
+    regionsPanel.appendChild(btn);
   });
 }
 
