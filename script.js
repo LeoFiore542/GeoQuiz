@@ -13,6 +13,10 @@ let entities = [];
 let score = 0;
 let errors = 0;
 let selectedEntity = null;
+let isPopupVisible = false;
+const popup = document.getElementById('input-popup');
+const popupInput = document.getElementById('entity-input');
+const messageDiv = document.getElementById('message');
 
 // Evento cambio mappa
 select.addEventListener('change', (e) => {
@@ -26,7 +30,33 @@ select.addEventListener('change', (e) => {
   document.getElementById('errors').textContent = errors;
   document.getElementById('total').textContent = currentMap.total;
   document.getElementById('ui').style.display = 'block';
+  messageDiv.textContent = '';
+  messageDiv.className = 'message';
   loadMap(currentMap.svg, currentMap.data);
+});
+
+// Funzione per mostrare/nascondere popup
+function showPopup(x, y) {
+  popup.style.display = 'block';
+  popup.style.left = Math.min(x, window.innerWidth - 270) + 'px';
+  popup.style.top = (y - 60) + 'px';
+  isPopupVisible = true;
+  popupInput.value = '';
+  popupInput.focus();
+  popupInput.select();
+}
+
+function hidePopup() {
+  popup.style.display = 'none';
+  isPopupVisible = false;
+}
+
+// Movimento popup con mouse
+document.addEventListener('mousemove', (e) => {
+  if (isPopupVisible && selectedEntity) {
+    popup.style.left = Math.min(e.clientX - 50, window.innerWidth - 270) + 'px';
+    popup.style.top = (e.clientY - 60) + 'px';
+  }
 });
 
 // Funzione per caricare SVG e dati (modulare)
@@ -69,17 +99,20 @@ async function loadMap(svgUrl, dataUrl) {
   // Aggiungi eventi click ai path
   const paths = svgElement.querySelectorAll('path');
   paths.forEach(path => {
-    path.addEventListener('click', () => {
+    path.addEventListener('click', (e) => {
       if (path.classList.contains('correct')) return;
       selectedEntity = path.id;
-      document.getElementById('entity-input').focus();
+      // Mostra popup al click del mouse
+      showPopup(e.clientX, e.clientY);
     });
   });
 }
 
-// Submit input (logica comune)
-document.getElementById('submit-btn').addEventListener('click', () => {
-  const input = document.getElementById('entity-input').value.trim().toLowerCase();
+// Funzione per elaborare l'input
+function submitAnswer() {
+  if (!selectedEntity) return;
+  
+  const input = popupInput.value.trim().toLowerCase();
   const entity = entities.find(e => e.id === selectedEntity);
   if (!entity) return;
 
@@ -98,16 +131,37 @@ document.getElementById('submit-btn').addEventListener('click', () => {
     document.getElementById('current-map').appendChild(label);
     score++;
     document.getElementById('score').textContent = score;
-    document.getElementById('message').textContent = 'Corretto!';
-    if (score === currentMap.total) alert('Mappa completata! Punteggio: ' + score);
+    messageDiv.textContent = '✓ Corretto!';
+    messageDiv.className = 'message success';
+    if (score === currentMap.total) {
+      setTimeout(() => {
+        alert('🎉 Mappa completata! Punteggio: ' + score);
+      }, 500);
+    }
   } else {
     // Errore
     errors++;
     document.getElementById('errors').textContent = errors;
-    document.getElementById('message').textContent = 'Sbagliato! Riprova.';
+    messageDiv.textContent = '✗ Sbagliato! Riprova.';
+    messageDiv.className = 'message error';
     const path = document.getElementById(selectedEntity);
     path.classList.add('error');
     setTimeout(() => path.classList.remove('error'), 1000);
   }
-  document.getElementById('entity-input').value = '';
+  hidePopup();
+}
+
+// Submit con Enter
+popupInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    submitAnswer();
+  }
+});
+
+// Chiudi popup cliccando fuori
+document.addEventListener('click', (e) => {
+  if (isPopupVisible && !popup.contains(e.target)) {
+    hidePopup();
+}
 });

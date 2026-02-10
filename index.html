@@ -1,23 +1,51 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Geo Quiz Game</title>
   <link rel="stylesheet" href="./static/styles.css">
 </head>
 <body>
-  <h1>Indovina le Entità Geografiche</h1>
-  <select id="map-select">
-    <option value="">Seleziona una mappa</option>
-    <!-- Opzioni caricate da JS -->
-  </select>
-  <div id="map-container"></div>
-  <div id="ui" style="display:none;">
-    <p>Punteggio: <span id="score">0</span> / <span id="total">0</span></p>
-    <p>Errori: <span id="errors">0</span></p>
-    <input type="text" id="entity-input" placeholder="Inserisci nome">
-    <button id="submit-btn">Conferma</button>
-    <div id="message"></div>
+  <div class="container">
+    <header>
+      <h1>🌍 Geo Quiz Game</h1>
+      <p class="subtitle">Metti alla prova le tue conoscenze geografiche</p>
+    </header>
+
+    <div class="controls">
+      <label for="map-select">Seleziona una mappa:</label>
+      <select id="map-select">
+        <option value="">-- Scegli una mappa --</option>
+        <!-- Opzioni caricate da JS -->
+      </select>
+    </div>
+
+    <div id="ui" class="game-ui" style="display:none;">
+      <div class="stats-bar">
+        <div class="stat">
+          <span class="label">Punteggio</span>
+          <span class="value"><span id="score">0</span> / <span id="total">0</span></span>
+        </div>
+        <div class="stat">
+          <span class="label">Errori</span>
+          <span class="value" id="errors">0</span>
+        </div>
+      </div>
+      <div id="message" class="message"></div>
+    </div>
+
+    <div id="map-wrapper">
+      <div id="map-container"></div>
+    </div>
+
+    <!-- Popup dinamico -->
+    <div id="input-popup" class="input-popup" style="display:none;">
+      <input type="text" id="entity-input" placeholder="Inserisci il nome..." autocomplete="off">
+      <div class="popup-hint">Premi INVIO per confermare</div>
+    </div>
   </div>
+
   <script src="./config.js"></script>
   <script src="./script.js"></script>
 </body>
