@@ -154,6 +154,11 @@ svg {
   width: 100%;
   height: auto;
   display: block;
+  pointer-events: auto;
+}
+
+svg path {
+  pointer-events: auto !important;
 }
 
 path {
@@ -162,6 +167,7 @@ path {
   stroke-width: 1.5;
   cursor: pointer;
   transition: fill 0.2s, filter 0.2s;
+  pointer-events: auto !important;
 }
 
 path:hover {

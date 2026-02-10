@@ -75,9 +75,12 @@ async function loadMap(svgUrl, dataUrl) {
   // Aggiungi eventi click ai path
   const paths = svgElement.querySelectorAll('path');
   paths.forEach(path => {
-    path.addEventListener('click', (e) => {
-      if (path.classList.contains('correct')) return;
-      selectedEntity = path.id;
+    path.style.pointerEvents = 'auto';
+    path.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (this.classList.contains('correct')) return;
+      selectedEntity = this.id;
+      console.log('Regione selezionata:', selectedEntity);
       popupInput.focus();
     });
   });
@@ -85,11 +88,17 @@ async function loadMap(svgUrl, dataUrl) {
 
 // Funzione per elaborare l'input
 function submitAnswer() {
-  if (!selectedEntity) return;
+  if (!selectedEntity) {
+    console.warn('Nessuna regione selezionata');
+    return;
+  }
   
   const input = popupInput.value.trim().toLowerCase();
   const entity = entities.find(e => e.id === selectedEntity);
-  if (!entity) return;
+  if (!entity) {
+    console.warn('Entità non trovata:', selectedEntity);
+    return;
+  }
 
   const correctNames = [entity.name.toLowerCase(), ...entity.aliases.map(a => a.toLowerCase())];
   if (correctNames.includes(input)) {
