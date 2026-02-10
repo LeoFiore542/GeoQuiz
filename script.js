@@ -102,6 +102,15 @@ async function loadMap(svgUrl, dataUrl) {
   }
   svgElement.id = 'current-map';
 
+  // Crea un wrapper per il pan/zoom
+  const wrapper = document.createElement('div');
+  wrapper.id = 'map-transform-wrapper';
+  wrapper.style.width = '100%';
+  wrapper.style.height = '100%';
+  wrapper.style.transformOrigin = 'center center';
+  mapContainer.insertBefore(wrapper, svgElement);
+  wrapper.appendChild(svgElement);
+
   // Proviamo a caricare dati JSON
   let loadedFromJson = false;
   try {
@@ -133,10 +142,8 @@ async function loadMap(svgUrl, dataUrl) {
   // Setup pan/zoom
   const container = document.getElementById('map-container');
   container.style.touchAction = 'none';
-  svgElement.style.transformOrigin = '0 0';
-  svgElement.style.willChange = 'transform';
   zScale = 1; zTx = 0; zTy = 0;
-  svgElement.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
+  wrapper.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
 
   // Wheel to zoom (prevent page scroll)
   container.addEventListener('wheel', (e) => {
@@ -151,7 +158,7 @@ async function loadMap(svgUrl, dataUrl) {
     zTx = mx - (mx - zTx) * scaleRatio;
     zTy = my - (my - zTy) * scaleRatio;
     zScale = newScale;
-    clampAndApply(svgElement, container);
+    wrapper.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
   }, { passive: false });
 
   // Pointer panning
@@ -170,7 +177,7 @@ async function loadMap(svgUrl, dataUrl) {
     const dy = e.clientY - panStart.y;
     zTx = translateStart.x + dx;
     zTy = translateStart.y + dy;
-    clampAndApply(svgElement, container);
+    wrapper.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
   });
   container.addEventListener('pointerup', (e) => {
     if (e.pointerId === activePointerId) {
@@ -188,34 +195,6 @@ async function loadMap(svgUrl, dataUrl) {
     }
   });
 
-  // Helper: clamp translation
-  function clampAndApply(svg, cont) {
-    const bbox = svg.getBBox();
-    const cw = cont.clientWidth;
-    const ch = cont.clientHeight;
-    const scaledW = bbox.width * zScale;
-    const scaledH = bbox.height * zScale;
-
-    const minTx = cw - (bbox.x + bbox.width) * zScale;
-    const maxTx = -bbox.x * zScale;
-    const minTy = ch - (bbox.y + bbox.height) * zScale;
-    const maxTy = -bbox.y * zScale;
-
-    if (scaledW <= cw) {
-      zTx = (cw - scaledW) / 2 - bbox.x * zScale;
-    } else {
-      zTx = Math.min(maxTx, Math.max(minTx, zTx));
-    }
-
-    if (scaledH <= ch) {
-      zTy = (ch - scaledH) / 2 - bbox.y * zScale;
-    } else {
-      zTy = Math.min(maxTy, Math.max(minTy, zTy));
-    }
-
-    svg.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
-  }
-
   // Fit-to-screen and Reset handlers
   function fitToScreen() {
     const bbox = svgElement.getBBox();
@@ -224,18 +203,17 @@ async function loadMap(svgUrl, dataUrl) {
     if (bbox.width <= 0 || bbox.height <= 0) return;
     const scaleX = cw / bbox.width;
     const scaleY = ch / bbox.height;
-    const fitScale = Math.max(zMin, Math.min(zMax, Math.min(scaleX, scaleY) * 0.95));
-    zScale = fitScale;
-    zTx = (cw - bbox.width * zScale) / 2 - bbox.x * zScale;
-    zTy = (ch - bbox.height * zScale) / 2 - bbox.y * zScale;
-    clampAndApply(svgElement, container);
+    zScale = Math.max(zMin, Math.min(zMax, Math.min(scaleX, scaleY) * 0.95));
+    zTx = (cw - bbox.width * zScale) / 2;
+    zTy = (ch - bbox.height * zScale) / 2;
+    wrapper.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
   }
 
   function resetView() {
     zScale = 1;
     zTx = 0;
     zTy = 0;
-    clampAndApply(svgElement, container);
+    wrapper.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
   }
 
   const fitBtn = document.getElementById('fit-btn');
