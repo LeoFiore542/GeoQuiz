@@ -16,8 +16,6 @@ let selectedEntity = null;
 const popupInput = document.getElementById('entity-input');
 const messageDiv = document.getElementById('message');
 const inputSection = document.getElementById('input-section');
-const gameArea = document.getElementById('game-area');
-const regionsPanel = document.getElementById('regions-panel');
 
 // Evento cambio mappa
 select.addEventListener('change', (e) => {
@@ -31,7 +29,7 @@ select.addEventListener('change', (e) => {
   document.getElementById('errors').textContent = errors;
   document.getElementById('total').textContent = currentMap.total;
   document.getElementById('ui').style.display = 'block';
-  gameArea.style.display = 'flex';
+  document.getElementById('map-wrapper').style.display = 'block';
   inputSection.style.display = 'flex';
   messageDiv.textContent = '';
   messageDiv.className = 'message';
@@ -84,36 +82,38 @@ async function loadMap(svgUrl, dataUrl) {
   if (!currentMap.total) currentMap.total = entities.length;
   document.getElementById('total').textContent = currentMap.total;
 
-  // Genera i bottoni per le regioni
-  regionsPanel.innerHTML = '';
-  entities.forEach(entity => {
-    const btn = document.createElement('button');
-    btn.className = 'region-btn';
-    btn.textContent = entity.name;
-    btn.dataset.entityId = entity.id;
-    
-    btn.addEventListener('click', () => {
-      // Rimuovi selezione precedente
-      document.querySelectorAll('.region-btn').forEach(b => {
-        b.classList.remove('selected');
+  // Aggiungi event listener ai path SVG per il click
+  const svgPaths = svgElement.querySelectorAll('path');
+  svgPaths.forEach(path => {
+    path.style.cursor = 'pointer';
+    path.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pathId = path.id;
+      const entity = entities.find(ent => ent.id === pathId);
+      
+      if (!entity) {
+        console.warn('Entità non trovata per:', pathId);
+        return;
+      }
+      
+      // Rimuovi classe selected da altri path
+      svgPaths.forEach(p => {
+        p.classList.remove('selected');
+        p.style.opacity = '0.6';
+        p.style.filter = 'none';
       });
       
-      // Nuovo elemento selezionato
-      btn.classList.add('selected');
-      selectedEntity = entity.id;
+      // Seleziona questo path
+      selectedEntity = pathId;
+      path.classList.add('selected');
+      path.style.opacity = '1';
+      path.style.filter = 'drop-shadow(0 0 8px rgba(102, 126, 234, 0.8))';
+      
+      // Focus sull'input
       popupInput.focus();
       
-      // Evidenzia sulla mappa
-      const paths = svgElement.querySelectorAll('path');
-      paths.forEach(p => p.style.opacity = '0.4');
-      const selectedPath = svgElement.getElementById(entity.id);
-      if (selectedPath) {
-        selectedPath.style.opacity = '1';
-        selectedPath.style.filter = 'drop-shadow(0 0 8px rgba(102, 126, 234, 0.8))';
-      }
+      console.log('Selezionato:', entity.name);
     });
-    
-    regionsPanel.appendChild(btn);
   });
 }
 
@@ -136,6 +136,9 @@ function submitAnswer() {
     // Corretto
     const path = document.getElementById(selectedEntity);
     path.classList.add('correct');
+    path.style.opacity = '1';
+    path.style.filter = 'none';
+    
     // Aggiungi label
     const bbox = path.getBBox();
     const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -159,6 +162,7 @@ function submitAnswer() {
     document.getElementById('errors').textContent = errors;
     messageDiv.textContent = '✗ Sbagliato! Riprova.';
     messageDiv.className = 'message error';
+    
     const path = document.getElementById(selectedEntity);
     path.classList.add('error');
     setTimeout(() => path.classList.remove('error'), 1000);
