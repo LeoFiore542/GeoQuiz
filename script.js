@@ -108,8 +108,23 @@ async function loadMap(svgUrl, dataUrl) {
   wrapper.style.width = '100%';
   wrapper.style.height = '100%';
   wrapper.style.transformOrigin = 'center center';
+  wrapper.style.display = 'flex';
+  wrapper.style.alignItems = 'center';
+  wrapper.style.justifyContent = 'center';
   mapContainer.insertBefore(wrapper, svgElement);
   wrapper.appendChild(svgElement);
+
+  // Rendi l'SVG responsivo: rimuovi width/height e usa viewBox
+  const bbox = svgElement.getBBox();
+  if (!svgElement.hasAttribute('viewBox')) {
+    svgElement.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+  }
+  svgElement.removeAttribute('width');
+  svgElement.removeAttribute('height');
+  svgElement.style.width = '100%';
+  svgElement.style.height = '100%';
+  svgElement.style.maxWidth = '100%';
+  svgElement.style.maxHeight = '100%';
 
   // Proviamo a caricare dati JSON
   let loadedFromJson = false;
@@ -197,20 +212,17 @@ async function loadMap(svgUrl, dataUrl) {
 
   // Fit-to-screen and Reset handlers
   function fitToScreen() {
-    const bbox = svgElement.getBBox();
     const cw = container.clientWidth;
     const ch = container.clientHeight;
-    if (bbox.width <= 0 || bbox.height <= 0) return;
-    const scaleX = cw / bbox.width;
-    const scaleY = ch / bbox.height;
-    zScale = Math.max(zMin, Math.min(zMax, Math.min(scaleX, scaleY) * 0.95));
-    zTx = (cw - bbox.width * zScale) / 2;
-    zTy = (ch - bbox.height * zScale) / 2;
+    // Se la mappa sta già nel viewport, non cambiare
+    zScale = 1;
+    zTx = 0;
+    zTy = 0;
     wrapper.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
   }
 
   function resetView() {
-    zScale = 1;
+    zScale = 0.9; // Leggermente zoomed out per avere margine
     zTx = 0;
     zTy = 0;
     wrapper.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
@@ -221,8 +233,8 @@ async function loadMap(svgUrl, dataUrl) {
   if (fitBtn) fitBtn.addEventListener('click', fitToScreen);
   if (resetBtn) resetBtn.addEventListener('click', resetView);
 
-  // Scegli la prima regione casuale (senza avviare timer qui)
-  selectRandomEntity();
+  // Inizializza con zoom ridotto
+  resetView();
 }
 
 // Seleziona una regione casuale e la illumina
