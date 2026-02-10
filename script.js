@@ -163,5 +163,5 @@ popupInput.addEventListener('keypress', (e) => {
 document.addEventListener('click', (e) => {
   if (isPopupVisible && !popup.contains(e.target)) {
     hidePopup();
-}
+  }
 });
