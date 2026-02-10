@@ -7,7 +7,8 @@
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   padding: 20px;
 }
 
@@ -84,6 +85,26 @@ header h1 {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
+.view-controls {
+  display: inline-flex;
+  gap: 8px;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.view-controls button {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.9);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.view-controls button:hover {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
 .game-ui {
   background: white;
   padding: 20px;
@@ -116,23 +137,22 @@ header h1 {
   color: #667eea;
 }
 
-.message {
-  height: 30px;
-  padding: 8px 0;
-  text-align: center;
-  font-weight: 600;
-  border-radius: 6px;
-  min-height: 30px;
+/* map wrapper and container */
+#map-wrapper {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
-.message.success {
-  color: #27ae60;
-  background-color: #d5f4e6;
-}
-
-.message.error {
-  color: #e74c3c;
-  background-color: #fadbd8;
+#map-container {
+  width: 100%;
+  height: calc(100vh - 320px);
+  max-height: calc(100vh - 220px);
+  touch-action: none;
+  overflow: hidden;
+  position: relative;
 }
 
 #map-wrapper {
@@ -142,14 +162,22 @@ header h1 {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-svg {
+
+#map-container svg {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
   pointer-events: auto;
+  transform-origin: 0 0;
+  will-change: transform;
+  cursor: grab;
 }
 
-svg path {
+#map-container.grabbing svg {
+  cursor: grabbing;
+}
+
+#map-container svg path {
   pointer-events: auto !important;
 }
 

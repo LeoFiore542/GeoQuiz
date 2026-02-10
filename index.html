@@ -20,6 +20,10 @@
         <option value="">-- Scegli una mappa --</option>
         <!-- Opzioni caricate da JS -->
       </select>
+      <div class="view-controls">
+        <button id="fit-btn" title="Adatta mappa">Adatta</button>
+        <button id="reset-btn" title="Reset vista">Reset</button>
+      </div>
     </div>
 
     <div id="ui" class="game-ui" style="display:none;">
@@ -31,6 +35,10 @@
         <div class="stat">
           <span class="label">Errori</span>
           <span class="value" id="errors">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">Tempo</span>
+          <span class="value" id="timer">00:00</span>
         </div>
       </div>
       <div id="message" class="message"></div>

@@ -17,6 +17,46 @@ const popupInput = document.getElementById('entity-input');
 const messageDiv = document.getElementById('message');
 const inputSection = document.getElementById('input-section');
 
+// Timer
+let timerStarted = false;
+let startTime = 0;
+let timerInterval = null;
+
+// Pan & Zoom state
+let zScale = 1;
+let zMin = 0.5;
+let zMax = 4;
+let zTx = 0;
+let zTy = 0;
+let isPanning = false;
+let panStart = {x:0,y:0};
+let translateStart = {x:0,y:0};
+
+function formatTime(ms) {
+  const total = Math.floor(ms / 1000);
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+}
+
+function startTimer() {
+  if (timerStarted) return;
+  timerStarted = true;
+  startTime = Date.now();
+  document.getElementById('timer').textContent = '00:00';
+  timerInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    document.getElementById('timer').textContent = formatTime(elapsed);
+  }, 250);
+}
+
+function stopTimer() {
+  if (!timerStarted) return;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerStarted = false;
+}
+
 // Evento cambio mappa
 select.addEventListener('change', (e) => {
   const mapId = e.target.value;
@@ -82,36 +122,151 @@ async function loadMap(svgUrl, dataUrl) {
   if (!currentMap.total) currentMap.total = entities.length;
   document.getElementById('total').textContent = currentMap.total;
 
+  // Setup pan/zoom on the container
+  const container = document.getElementById('map-container');
+  container.style.touchAction = 'none';
+  svgElement.style.transformOrigin = '0 0';
+  svgElement.style.willChange = 'transform';
+  zScale = 1; zTx = 0; zTy = 0;
+  svgElement.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
+
+  // Wheel to zoom (prevent page scroll)
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = container.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const delta = -e.deltaY;
+    const factor = Math.exp(delta * 0.001);
+    const newScale = Math.max(zMin, Math.min(zMax, zScale * factor));
+    const scaleRatio = newScale / zScale;
+    zTx = mx - (mx - zTx) * scaleRatio;
+    zTy = my - (my - zTy) * scaleRatio;
+    zScale = newScale;
+    // Apply transform with clamping
+    clampAndApply();
+  }, { passive: false });
+
+  // Pointer panning
+  let activePointerId = null;
+  container.addEventListener('pointerdown', (e) => {
+    activePointerId = e.pointerId;
+    isPanning = true;
+    panStart = { x: e.clientX, y: e.clientY };
+    translateStart = { x: zTx, y: zTy };
+    container.setPointerCapture(activePointerId);
+    container.classList.add('grabbing');
+  });
+  container.addEventListener('pointermove', (e) => {
+    if (!isPanning || e.pointerId !== activePointerId) return;
+    const dx = e.clientX - panStart.x;
+    const dy = e.clientY - panStart.y;
+    zTx = translateStart.x + dx;
+    zTy = translateStart.y + dy;
+    clampAndApply();
+  });
+  container.addEventListener('pointerup', (e) => {
+    if (e.pointerId === activePointerId) {
+      isPanning = false;
+      container.releasePointerCapture(activePointerId);
+      activePointerId = null;
+      container.classList.remove('grabbing');
+    }
+  });
+  container.addEventListener('pointercancel', (e) => {
+    if (e.pointerId === activePointerId) {
+      isPanning = false;
+      activePointerId = null;
+      container.classList.remove('grabbing');
+    }
+  });
+
   // Aggiungi event listener ai path SVG per il click
   const svgPaths = svgElement.querySelectorAll('path');
+
+  // Helper: clamp translation so the SVG stays visible in container
+  function clampAndApply() {
+    const bbox = svgElement.getBBox();
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const scaledW = bbox.width * zScale;
+    const scaledH = bbox.height * zScale;
+
+    // Compute min/max translations so bbox remains visible
+    const minTx = cw - (bbox.x + bbox.width) * zScale;
+    const maxTx = -bbox.x * zScale;
+    const minTy = ch - (bbox.y + bbox.height) * zScale;
+    const maxTy = -bbox.y * zScale;
+
+    if (scaledW <= cw) {
+      zTx = (cw - scaledW) / 2 - bbox.x * zScale;
+    } else {
+      zTx = Math.min(maxTx, Math.max(minTx, zTx));
+    }
+
+    if (scaledH <= ch) {
+      zTy = (ch - scaledH) / 2 - bbox.y * zScale;
+    } else {
+      zTy = Math.min(maxTy, Math.max(minTy, zTy));
+    }
+
+    svgElement.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
+  }
+
+  // Fit-to-screen and Reset handlers
+  function fitToScreen() {
+    const bbox = svgElement.getBBox();
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    if (bbox.width <= 0 || bbox.height <= 0) return;
+    const scaleX = cw / bbox.width;
+    const scaleY = ch / bbox.height;
+    const fitScale = Math.max(zMin, Math.min(zMax, Math.min(scaleX, scaleY) * 0.95));
+    zScale = fitScale;
+    // center the map
+    zTx = (cw - bbox.width * zScale) / 2 - bbox.x * zScale;
+    zTy = (ch - bbox.height * zScale) / 2 - bbox.y * zScale;
+    clampAndApply();
+  }
+
+  function resetView() {
+    zScale = 1;
+    zTx = 0;
+    zTy = 0;
+    clampAndApply();
+  }
+
+  // Wire buttons (if present)
+  const fitBtn = document.getElementById('fit-btn');
+  const resetBtn = document.getElementById('reset-btn');
+  if (fitBtn) fitBtn.addEventListener('click', fitToScreen);
+  if (resetBtn) resetBtn.addEventListener('click', resetView);
   svgPaths.forEach(path => {
     path.style.cursor = 'pointer';
     path.addEventListener('click', (e) => {
       e.stopPropagation();
       const pathId = path.id;
       const entity = entities.find(ent => ent.id === pathId);
-      
       if (!entity) {
         console.warn('Entità non trovata per:', pathId);
         return;
       }
-      
+
       // Rimuovi classe selected da altri path
       svgPaths.forEach(p => {
         p.classList.remove('selected');
         p.style.opacity = '0.6';
         p.style.filter = 'none';
       });
-      
+
       // Seleziona questo path
       selectedEntity = pathId;
       path.classList.add('selected');
       path.style.opacity = '1';
       path.style.filter = 'drop-shadow(0 0 8px rgba(102, 126, 234, 0.8))';
-      
+
       // Focus sull'input
       popupInput.focus();
-      
       console.log('Selezionato:', entity.name);
     });
   });
@@ -123,6 +278,8 @@ function submitAnswer() {
     console.warn('Nessuna regione selezionata');
     return;
   }
+  // Avvia il timer alla prima submission
+  if (!timerStarted) startTimer();
   
   const input = popupInput.value.trim().toLowerCase();
   const entity = entities.find(e => e.id === selectedEntity);
@@ -152,8 +309,10 @@ function submitAnswer() {
     messageDiv.textContent = '✓ Corretto!';
     messageDiv.className = 'message success';
     if (score === currentMap.total) {
+      // stop timer when complete
+      stopTimer();
       setTimeout(() => {
-        alert('🎉 Mappa completata! Punteggio: ' + score);
+        alert('🎉 Mappa completata! Punteggio: ' + score + ' - Tempo: ' + document.getElementById('timer').textContent);
       }, 500);
     }
   } else {
