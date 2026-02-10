@@ -1,10 +1,10 @@
-// Popola menu mappe da config.js
-const select = document.getElementById('map-select');
+// Popola menu mappe nello splash screen da config.js
+const splashMapSelect = document.getElementById('splash-map-select');
 maps.forEach(m => {
   const option = document.createElement('option');
   option.value = m.id;
   option.textContent = m.name;
-  select.appendChild(option);
+  splashMapSelect.appendChild(option);
 });
 
 // Variabili globali
@@ -12,10 +12,9 @@ let currentMap = null;
 let entities = [];
 let score = 0;
 let errors = 0;
-let selectedEntity = null;
-const popupInput = document.getElementById('entity-input');
+let currentEntity = null; // Entità attualmente illuminata
+const entityInput = document.getElementById('entity-input');
 const messageDiv = document.getElementById('message');
-const inputSection = document.getElementById('input-section');
 
 // Timer
 let timerStarted = false;
@@ -57,26 +56,35 @@ function stopTimer() {
   timerStarted = false;
 }
 
-// Evento cambio mappa
-select.addEventListener('change', (e) => {
-  const mapId = e.target.value;
+// Evento click "Inizia" dal splash screen
+document.getElementById('start-btn').addEventListener('click', () => {
+  const mapId = splashMapSelect.value;
+  if (!mapId) {
+    alert('Seleziona una mappa!');
+    return;
+  }
+  
   currentMap = maps.find(m => m.id === mapId);
   if (!currentMap) return;
 
+  // Nascondi splash, mostra gioco
+  document.getElementById('splash-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
+
   // Reset gioco
-  score = 0; errors = 0;
+  score = 0; errors = 0; timerStarted = false;
   document.getElementById('score').textContent = score;
   document.getElementById('errors').textContent = errors;
   document.getElementById('total').textContent = currentMap.total;
-  document.getElementById('ui').style.display = 'block';
-  document.getElementById('map-wrapper').style.display = 'block';
-  inputSection.style.display = 'flex';
+  document.getElementById('timer').textContent = '00:00';
   messageDiv.textContent = '';
   messageDiv.className = 'message';
+
+  // Carica mappa e inizia il gioco
   loadMap(currentMap.svg, currentMap.data);
 });
 
-// Funzione per caricare SVG e dati (modulare)
+// Funzione per caricare SVG e dati
 async function loadMap(svgUrl, dataUrl) {
   // Carica SVG
   const response = await fetch(svgUrl);
@@ -122,7 +130,7 @@ async function loadMap(svgUrl, dataUrl) {
   if (!currentMap.total) currentMap.total = entities.length;
   document.getElementById('total').textContent = currentMap.total;
 
-  // Setup pan/zoom on the container
+  // Setup pan/zoom
   const container = document.getElementById('map-container');
   container.style.touchAction = 'none';
   svgElement.style.transformOrigin = '0 0';
@@ -143,8 +151,7 @@ async function loadMap(svgUrl, dataUrl) {
     zTx = mx - (mx - zTx) * scaleRatio;
     zTy = my - (my - zTy) * scaleRatio;
     zScale = newScale;
-    // Apply transform with clamping
-    clampAndApply();
+    clampAndApply(svgElement, container);
   }, { passive: false });
 
   // Pointer panning
@@ -163,7 +170,7 @@ async function loadMap(svgUrl, dataUrl) {
     const dy = e.clientY - panStart.y;
     zTx = translateStart.x + dx;
     zTy = translateStart.y + dy;
-    clampAndApply();
+    clampAndApply(svgElement, container);
   });
   container.addEventListener('pointerup', (e) => {
     if (e.pointerId === activePointerId) {
@@ -181,18 +188,14 @@ async function loadMap(svgUrl, dataUrl) {
     }
   });
 
-  // Aggiungi event listener ai path SVG per il click
-  const svgPaths = svgElement.querySelectorAll('path');
-
-  // Helper: clamp translation so the SVG stays visible in container
-  function clampAndApply() {
-    const bbox = svgElement.getBBox();
-    const cw = container.clientWidth;
-    const ch = container.clientHeight;
+  // Helper: clamp translation
+  function clampAndApply(svg, cont) {
+    const bbox = svg.getBBox();
+    const cw = cont.clientWidth;
+    const ch = cont.clientHeight;
     const scaledW = bbox.width * zScale;
     const scaledH = bbox.height * zScale;
 
-    // Compute min/max translations so bbox remains visible
     const minTx = cw - (bbox.x + bbox.width) * zScale;
     const maxTx = -bbox.x * zScale;
     const minTy = ch - (bbox.y + bbox.height) * zScale;
@@ -210,7 +213,7 @@ async function loadMap(svgUrl, dataUrl) {
       zTy = Math.min(maxTy, Math.max(minTy, zTy));
     }
 
-    svgElement.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
+    svg.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
   }
 
   // Fit-to-screen and Reset handlers
@@ -223,114 +226,76 @@ async function loadMap(svgUrl, dataUrl) {
     const scaleY = ch / bbox.height;
     const fitScale = Math.max(zMin, Math.min(zMax, Math.min(scaleX, scaleY) * 0.95));
     zScale = fitScale;
-    // center the map
     zTx = (cw - bbox.width * zScale) / 2 - bbox.x * zScale;
     zTy = (ch - bbox.height * zScale) / 2 - bbox.y * zScale;
-    clampAndApply();
+    clampAndApply(svgElement, container);
   }
 
   function resetView() {
     zScale = 1;
     zTx = 0;
     zTy = 0;
-    clampAndApply();
+    clampAndApply(svgElement, container);
   }
 
-  // Wire buttons (if present)
   const fitBtn = document.getElementById('fit-btn');
   const resetBtn = document.getElementById('reset-btn');
   if (fitBtn) fitBtn.addEventListener('click', fitToScreen);
   if (resetBtn) resetBtn.addEventListener('click', resetView);
-  svgPaths.forEach(path => {
-    path.style.cursor = 'pointer';
-    path.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const pathId = path.id;
-      const entity = entities.find(ent => ent.id === pathId);
-      if (!entity) {
-        console.warn('Entità non trovata per:', pathId);
-        return;
-      }
 
-      // Rimuovi classe selected da altri path
-      svgPaths.forEach(p => {
-        p.classList.remove('selected');
-        p.style.opacity = '0.6';
-        p.style.filter = 'none';
-      });
-
-      // Seleziona questo path
-      selectedEntity = pathId;
-      path.classList.add('selected');
-      path.style.opacity = '1';
-      path.style.filter = 'drop-shadow(0 0 8px rgba(102, 126, 234, 0.8))';
-
-      // Focus sull'input
-      popupInput.focus();
-      console.log('Selezionato:', entity.name);
-    });
-  });
+  // Scegli la prima regione casuale (senza avviare timer qui)
+  selectRandomEntity();
 }
 
-// Funzione per elaborare l'input
-function submitAnswer() {
-  if (!selectedEntity) {
-    console.warn('Nessuna regione selezionata');
-    return;
-  }
-  // Avvia il timer alla prima submission
-  if (!timerStarted) startTimer();
-  
-  const input = popupInput.value.trim().toLowerCase();
-  const entity = entities.find(e => e.id === selectedEntity);
-  if (!entity) {
-    console.warn('Entità non trovata:', selectedEntity);
+// Seleziona una regione casuale e la illumina
+function selectRandomEntity() {
+  const svgElement = document.getElementById('current-map');
+  const svgPaths = svgElement.querySelectorAll('path');
+
+  // Deseleziona tutte
+  svgPaths.forEach(p => {
+    p.classList.remove('selected');
+    if (!p.classList.contains('correct')) {
+      p.style.opacity = '0.6';
+      p.style.filter = 'none';
+    }
+  });
+
+  // Scegli casualmente una che non è stata già indovinata
+  const available = entities.filter(e => {
+    const path = document.getElementById(e.id);
+    return path && !path.classList.contains('correct');
+  });
+
+  if (available.length === 0) {
+    // Mappa completata!
+    stopTimer();
+    setTimeout(() => {
+      alert('🎉 Mappa completata! Punteggio: ' + score + ' - Tempo: ' + document.getElementById('timer').textContent);
+      // Opzionale: torna allo splash screen
+      document.getElementById('game-screen').style.display = 'none';
+      document.getElementById('splash-screen').style.display = 'flex';
+    }, 300);
     return;
   }
 
-  const correctNames = [entity.name.toLowerCase(), ...entity.aliases.map(a => a.toLowerCase())];
-  if (correctNames.includes(input)) {
-    // Corretto
-    const path = document.getElementById(selectedEntity);
-    path.classList.add('correct');
-    path.style.opacity = '1';
-    path.style.filter = 'none';
-    
-    // Aggiungi label
-    const bbox = path.getBBox();
-    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    label.textContent = entity.name;
-    label.setAttribute('x', bbox.x + bbox.width / 2);
-    label.setAttribute('y', bbox.y + bbox.height / 2);
-    label.setAttribute('text-anchor', 'middle');
-    document.getElementById('current-map').appendChild(label);
-    score++;
-    document.getElementById('score').textContent = score;
-    messageDiv.textContent = '✓ Corretto!';
-    messageDiv.className = 'message success';
-    if (score === currentMap.total) {
-      // stop timer when complete
-      stopTimer();
-      setTimeout(() => {
-        alert('🎉 Mappa completata! Punteggio: ' + score + ' - Tempo: ' + document.getElementById('timer').textContent);
-      }, 500);
-    }
-  } else {
-    // Errore
-    errors++;
-    document.getElementById('errors').textContent = errors;
-    messageDiv.textContent = '✗ Sbagliato! Riprova.';
-    messageDiv.className = 'message error';
-    
-    const path = document.getElementById(selectedEntity);
-    path.classList.add('error');
-    setTimeout(() => path.classList.remove('error'), 1000);
-  }
-  popupInput.value = '';
+  currentEntity = available[Math.floor(Math.random() * available.length)];
+  const pathElement = document.getElementById(currentEntity.id);
+
+  // Illumina la regione
+  pathElement.classList.add('selected');
+  pathElement.style.opacity = '1';
+  pathElement.style.filter = 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.6))';
+
+  // Focus all'input
+  entityInput.focus();
+  entityInput.value = '';
+  messageDiv.textContent = '';
+  messageDiv.className = 'message';
 }
 
 // Submit con Enter o click bottone
-popupInput.addEventListener('keypress', (e) => {
+entityInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     e.preventDefault();
     submitAnswer();
@@ -338,3 +303,58 @@ popupInput.addEventListener('keypress', (e) => {
 });
 
 document.getElementById('submit-btn').addEventListener('click', submitAnswer);
+
+function submitAnswer() {
+  if (!currentEntity) {
+    console.warn('Nessuna regione selezionata');
+    return;
+  }
+
+  // Avvia il timer al primo submit
+  if (!timerStarted) startTimer();
+
+  const input = entityInput.value.trim().toLowerCase();
+  const correctNames = [currentEntity.name.toLowerCase(), ...currentEntity.aliases.map(a => a.toLowerCase())];
+
+  if (correctNames.includes(input)) {
+    // Corretto
+    const path = document.getElementById(currentEntity.id);
+    path.classList.add('correct');
+    path.classList.remove('selected');
+    path.style.opacity = '1';
+    path.style.filter = 'none';
+
+    // Aggiungi label
+    const bbox = path.getBBox();
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.textContent = currentEntity.name;
+    label.setAttribute('x', bbox.x + bbox.width / 2);
+    label.setAttribute('y', bbox.y + bbox.height / 2);
+    label.setAttribute('text-anchor', 'middle');
+    document.getElementById('current-map').appendChild(label);
+
+    score++;
+    document.getElementById('score').textContent = score;
+    messageDiv.textContent = '✓ Corretto!';
+    messageDiv.className = 'message success';
+
+    // Seleziona la prossima regione
+    setTimeout(() => {
+      selectRandomEntity();
+    }, 800);
+  } else {
+    // Sbagliato
+    errors++;
+    document.getElementById('errors').textContent = errors;
+    messageDiv.textContent = '✗ Sbagliato! Riprova.';
+    messageDiv.className = 'message error';
+
+    const path = document.getElementById(currentEntity.id);
+    path.classList.add('error');
+    setTimeout(() => path.classList.remove('error'), 800);
+    
+    // Rimani sulla stessa regione, ma pulisci input
+    entityInput.value = '';
+    entityInput.focus();
+  }
+}

@@ -13,19 +13,15 @@ body {
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   position: relative;
-}
-
-header {
-  text-align: center;
-  color: white;
-  margin-bottom: 30px;
+  width: 100%;
+  height: 100%;
 }
 
 .version-badge {
-  position: absolute;
+  position: fixed;
   top: 15px;
   right: 15px;
   background: rgba(255, 255, 255, 0.2);
@@ -35,88 +31,138 @@ header {
   font-size: 0.8em;
   font-weight: 600;
   backdrop-filter: blur(10px);
+  z-index: 100;
 }
 
-header h1 {
-  font-size: 2.5em;
-  margin-bottom: 8px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+/* SPLASH SCREEN */
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.subtitle {
-  font-size: 1.1em;
-  opacity: 0.9;
-}
-
-.controls {
+.splash-card {
   background: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 50px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
 }
 
-.controls label {
-  display: block;
+.splash-card h1 {
+  font-size: 3em;
   margin-bottom: 10px;
-  font-weight: 600;
   color: #333;
 }
 
-.controls select {
+.splash-subtitle {
+  font-size: 1.2em;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.splash-form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.form-group label {
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 1.05em;
+}
+
+.form-group select {
   width: 100%;
   padding: 12px;
   border: 2px solid #667eea;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 1em;
   cursor: pointer;
   background-color: white;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.controls select:hover {
+.form-group select:hover {
   border-color: #764ba2;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.controls select:focus {
+.form-group select:focus {
   outline: none;
   border-color: #764ba2;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
-.view-controls {
-  display: inline-flex;
-  gap: 8px;
-  margin-left: 12px;
-  vertical-align: middle;
-}
-
-.view-controls button {
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(0,0,0,0.08);
-  background: rgba(255,255,255,0.9);
+.splash-btn {
+  padding: 14px 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.1em;
   cursor: pointer;
-  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 10px;
 }
 
-.view-controls button:hover {
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+.splash-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+.splash-btn:active {
+  transform: translateY(-1px);
+}
+
+/* GAME SCREEN */
+.game-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 15px;
+}
+
+header {
+  text-align: center;
+  color: white;
+  padding: 10px 0;
+}
+
+header h1 {
+  font-size: 2em;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .game-ui {
   background: white;
-  padding: 20px;
+  padding: 15px 20px;
   border-radius: 10px;
-  margin-bottom: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .stats-bar {
   display: flex;
   gap: 30px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 
@@ -137,31 +183,43 @@ header h1 {
   color: #667eea;
 }
 
-/* map wrapper and container */
+#message {
+  min-height: 20px;
+  font-weight: 600;
+  text-align: center;
+}
+
+#message.message {
+  margin: 0;
+}
+
+#message.success {
+  color: #27ae60;
+}
+
+#message.error {
+  color: #e74c3c;
+}
+
+/* MAP */
 #map-wrapper {
   background: white;
-  padding: 20px;
+  padding: 15px;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  flex: 1;
+  min-height: 300px;
+  position: relative;
 }
 
 #map-container {
   width: 100%;
-  height: calc(100vh - 320px);
-  max-height: calc(100vh - 220px);
+  height: 100%;
   touch-action: none;
   overflow: hidden;
   position: relative;
 }
-
-#map-wrapper {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
 
 #map-container svg {
   width: 100%;
@@ -195,6 +253,12 @@ path:hover {
   filter: drop-shadow(0 0 3px rgba(102, 126, 234, 0.5));
 }
 
+.selected {
+  fill: #ffd700 !important;
+  stroke: #ffb700 !important;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)) !important;
+}
+
 .correct {
   fill: #27ae60 !important;
   stroke: #1e8449 !important;
@@ -212,18 +276,63 @@ path:hover {
   transition: fill 0.3s;
 }
 
-.input-section {
+text {
+  font-size: 12px;
+  font-weight: bold;
+  pointer-events: none;
+  fill: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* MAP CONTROLS */
+.map-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.map-controls button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.map-controls button:hover {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+/* POPUP INPUT */
+.input-popup {
   background: white;
   padding: 20px;
   border-radius: 10px;
-  margin-top: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   display: flex;
-  gap: 10px;
+  justify-content: center;
 }
 
-.input-section input {
-  flex: 1;
+.popup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  max-width: 500px;
+  width: 100%;
+}
+
+.popup-text {
+  font-weight: 600;
+  color: #333;
+  font-size: 1em;
+}
+
+.input-popup input {
+  width: 100%;
   padding: 12px;
   border: 2px solid #667eea;
   border-radius: 6px;
@@ -231,14 +340,14 @@ path:hover {
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.input-section input:focus {
+.input-popup input:focus {
   outline: none;
   border-color: #764ba2;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.input-section button {
-  padding: 12px 30px;
+.input-popup button {
+  padding: 12px 40px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
@@ -248,20 +357,11 @@ path:hover {
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.input-section button:hover {
+.input-popup button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.input-section button:active {
+.input-popup button:active {
   transform: translateY(0);
-}
-
-/* Etichette sui path della mappa */
-text {
-  font-size: 12px;
-  font-weight: bold;
-  pointer-events: none;
-  fill: white;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
