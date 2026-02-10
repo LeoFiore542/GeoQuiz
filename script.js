@@ -235,6 +235,9 @@ async function loadMap(svgUrl, dataUrl) {
 
   // Inizializza con zoom ridotto
   resetView();
+
+  // Seleziona la prima regione e inizia il gioco
+  selectRandomEntity();
 }
 
 // Seleziona una regione casuale e la illumina
