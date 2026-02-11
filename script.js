@@ -20,6 +20,7 @@ const messageDiv = document.getElementById('message');
 let timerStarted = false;
 let startTime = 0;
 let timerInterval = null;
+let finalTime = '00:00';
 
 // Pan & Zoom state
 let zScale = 1;
@@ -263,12 +264,10 @@ function selectRandomEntity() {
   if (available.length === 0) {
     // Mappa completata!
     stopTimer();
-    setTimeout(() => {
-      alert('🎉 Mappa completata! Punteggio: ' + score + ' - Tempo: ' + document.getElementById('timer').textContent);
-      // Opzionale: torna allo splash screen
-      document.getElementById('game-screen').style.display = 'none';
-      document.getElementById('splash-screen').style.display = 'flex';
-    }, 300);
+    finalTime = document.getElementById('timer').textContent;
+    
+    // Mostra il modal di fine partita
+    showEndModal();
     return;
   }
 
@@ -351,3 +350,99 @@ function submitAnswer() {
     entityInput.focus();
   }
 }
+
+// Mostra il modal di fine partita
+function showEndModal() {
+  document.getElementById('end-score').textContent = score;
+  document.getElementById('end-errors').textContent = errors;
+  document.getElementById('end-time').textContent = finalTime;
+  document.getElementById('player-name').value = '';
+  document.getElementById('end-message').textContent = '';
+  document.getElementById('save-score-btn').disabled = false;
+  document.getElementById('end-modal').style.display = 'flex';
+  document.getElementById('player-name').focus();
+}
+
+// Nascondi il modal di fine partita
+function hideEndModal() {
+  document.getElementById('end-modal').style.display = 'none';
+}
+
+// Salva il punteggio
+async function saveScore() {
+  const playerName = document.getElementById('player-name').value.trim();
+  
+  if (!playerName) {
+    document.getElementById('end-message').textContent = 'Inserisci il tuo nome!';
+    document.getElementById('end-message').style.color = '#e74c3c';
+    return;
+  }
+
+  const saveBtn = document.getElementById('save-score-btn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Salvataggio...';
+
+  try {
+    const response = await fetch('/scores', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: playerName,
+        score: score,
+        errors: errors,
+        time: finalTime,
+        map: currentMap.name
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      document.getElementById('end-message').textContent = '✓ Punteggio salvato con successo!';
+      document.getElementById('end-message').style.color = '#27ae60';
+      setTimeout(() => {
+        resetGame();
+      }, 1500);
+    } else {
+      throw new Error(data.error || 'Errore nel salvataggio');
+    }
+  } catch (err) {
+    console.error('Errore:', err);
+    document.getElementById('end-message').textContent = 'Errore nel salvataggio: ' + err.message;
+    document.getElementById('end-message').style.color = '#e74c3c';
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Salva Punteggio';
+  }
+}
+
+// Reset alla schermata iniziale
+function resetGame() {
+  hideEndModal();
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('splash-screen').style.display = 'flex';
+  
+  // Reset variabili globali
+  entities = [];
+  currentEntity = null;
+  score = 0;
+  errors = 0;
+  timerStarted = false;
+  finalTime = '00:00';
+  if (timerInterval) clearInterval(timerInterval);
+}
+
+// Event listener per il pulsante salva
+document.getElementById('save-score-btn').addEventListener('click', saveScore);
+
+// Event listener per il pulsante nuova partita
+document.getElementById('restart-btn').addEventListener('click', resetGame);
+
+// Salva al premere Enter nel campo nome
+document.getElementById('player-name').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    saveScore();
+  }
+});

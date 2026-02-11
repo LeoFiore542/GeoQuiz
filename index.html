@@ -41,6 +41,7 @@
     <div id="game-screen" class="game-screen" style="display:none;">
       <header>
         <h1>🌍 Geo Quiz Game</h1>
+        <a href="./leaderboard.html" class="leaderboard-link" target="_blank">🏆 Leaderboard</a>
       </header>
 
       <div id="ui" class="game-ui">
@@ -77,6 +78,25 @@
           <input type="text" id="entity-input" placeholder="Inserisci il nome..." autocomplete="off">
           <button id="submit-btn">Conferma</button>
         </div>
+      </div>
+    </div>
+
+    <!-- MODAL FINE PARTITA -->
+    <div id="end-modal" class="end-modal" style="display: none;">
+      <div class="end-modal-content">
+        <h2>🎉 Partita Completata!</h2>
+        <div class="end-stats">
+          <p>📊 Punteggio: <strong id="end-score">0</strong></p>
+          <p>❌ Errori: <strong id="end-errors">0</strong></p>
+          <p>⏱️ Tempo: <strong id="end-time">00:00</strong></p>
+        </div>
+        <div class="end-form">
+          <label for="player-name">Inserisci il tuo nome:</label>
+          <input type="text" id="player-name" placeholder="Es. Mario Rossi" maxlength="50">
+          <button id="save-score-btn" class="save-btn">Salva Punteggio</button>
+          <button id="restart-btn" class="restart-btn">Nuova Partita</button>
+        </div>
+        <p class="end-message" id="end-message"></p>
       </div>
     </div>
   </div>

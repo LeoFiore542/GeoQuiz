@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard - Geo Quiz</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: white;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: transform 0.2s;
+    }
+
+    .back-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .leaderboard {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .leaderboard-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 60px 1fr 80px 80px 100px;
+      gap: 15px;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .leaderboard-body {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px 80px 100px;
+      gap: 15px;
+      padding: 15px 20px;
+      border-bottom: 1px solid #ecf0f1;
+      align-items: center;
+      transition: background 0.2s;
+    }
+
+    .leaderboard-row:hover {
+      background: #f8f9fa;
+    }
+
+    .leaderboard-row.gold {
+      background: #fef9e7;
+      border-left: 4px solid #f39c12;
+    }
+
+    .leaderboard-row.silver {
+      background: #f5f5f5;
+      border-left: 4px solid #bdc3c7;
+    }
+
+    .leaderboard-row.bronze {
+      background: #fdf8f3;
+      border-left: 4px solid #e67e22;
+    }
+
+    .rank {
+      font-weight: 700;
+      font-size: 18px;
+      color: #667eea;
+      text-align: center;
+    }
+
+    .rank.gold::before {
+      content: '🥇 ';
+    }
+
+    .rank.silver::before {
+      content: '🥈 ';
+    }
+
+    .rank.bronze::before {
+      content: '🥉 ';
+    }
+
+    .player-name {
+      color: #2c3e50;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .score {
+      color: #27ae60;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .errors {
+      color: #e74c3c;
+      text-align: center;
+    }
+
+    .time {
+      color: #3498db;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #95a5a6;
+    }
+
+    .empty-state h3 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      background: white;
+      border: 2px solid #ecf0f1;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .filter-btn:hover {
+      border-color: #667eea;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 32px;
+      }
+
+      .leaderboard-header,
+      .leaderboard-row {
+        grid-template-columns: 50px 1fr 60px;
+        gap: 10px;
+      }
+
+      .errors,
+      .time {
+        display: none;
+      }
+
+      .leaderboard-header > div:nth-child(3),
+      .leaderboard-header > div:nth-child(4),
+      .leaderboard-header > div:nth-child(5) {
+        display: none;
+      }
+    }
+
+    .scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: #667eea #ecf0f1;
+    }
+
+    .scrollbar::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .scrollbar::-webkit-scrollbar-track {
+      background: #ecf0f1;
+    }
+
+    .scrollbar::-webkit-scrollbar-thumb {
+      background: #667eea;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏆 Leaderboard</h1>
+      <p>I migliori giocatori di Geo Quiz</p>
+      <a href="./index.html" class="back-btn">← Torna al gioco</a>
+    </header>
+
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterByMap('all', this)">Tutte le mappe</button>
+      <button class="filter-btn" onclick="filterByMap('italy', this)">Italia</button>
+      <button class="filter-btn" onclick="filterByMap('europe', this)">Europa</button>
+      <button class="filter-btn" onclick="filterByMap('world', this)">Mondo</button>
+    </div>
+
+    <div class="leaderboard">
+      <div class="leaderboard-header">
+        <div>Pos.</div>
+        <div>Giocatore</div>
+        <div>Punteggio</div>
+        <div>Errori</div>
+        <div>Tempo</div>
+      </div>
+      <div class="leaderboard-body scrollbar" id="leaderboard-body">
+        <div class="empty-state">
+          <h3>Caricamento...</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allScores = [];
+    let currentFilter = 'all';
+
+    async function loadLeaderboard() {
+      try {
+        const response = await fetch('/scores');
+        const data = await response.json();
+        allScores = data.scores || [];
+        renderLeaderboard();
+      } catch (err) {
+        console.error('Errore nel caricamento:', err);
+        document.getElementById('leaderboard-body').innerHTML = '<div class="empty-state"><h3>❌ Errore nel caricamento</h3></div>';
+      }
+    }
+
+    function renderLeaderboard() {
+      let filtered = allScores;
+
+      if (currentFilter !== 'all') {
+        filtered = allScores.filter(s => {
+          const mapName = (s.map || '').toLowerCase();
+          return mapName.includes(currentFilter.toLowerCase());
+        });
+      }
+
+      const body = document.getElementById('leaderboard-body');
+
+      if (filtered.length === 0) {
+        body.innerHTML = '<div class="empty-state"><h3>Nessun punteggio ancora!</h3><p>Gioca una partita per comparire qui.</p></div>';
+        return;
+      }
+
+      body.innerHTML = filtered.map((score, index) => {
+        const medal = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+        const rankClass = medal ? medal : '';
+        
+        return `
+          <div class="leaderboard-row ${medal}">
+            <div class="rank ${rankClass}">${index + 1}</div>
+            <div class="player-name">${escapeHtml(score.name)}</div>
+            <div class="score">${score.score}</div>
+            <div class="errors">${score.errors}</div>
+            <div class="time">${score.time}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterByMap(map, btn) {
+      currentFilter = map;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn && btn.classList) btn.classList.add('active');
+      renderLeaderboard();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Carica i punteggi al caricamento della pagina
+    loadLeaderboard();
+
+    // Aggiorna ogni 5 secondi per mostrare nuovi punteggi
+    setInterval(loadLeaderboard, 5000);
+  </script>
+</body>
+</html>

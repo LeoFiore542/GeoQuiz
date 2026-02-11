@@ -1,0 +1,31 @@
+{
+  "scores": [
+    {
+      "id": 1770738185232,
+      "name": "Test User",
+      "score": 5,
+      "errors": 2,
+      "time": "03:21",
+      "map": "Italia",
+      "date": "10/02/2026, 16:43:05"
+    },
+    {
+      "id": 1770738700122,
+      "name": "Leonardo",
+      "score": 20,
+      "errors": 3,
+      "time": "01:47",
+      "map": "Italia",
+      "date": "10/02/2026, 16:51:40"
+    },
+    {
+      "id": 1770739167209,
+      "name": "mattmazz",
+      "score": 20,
+      "errors": 1,
+      "time": "02:08",
+      "map": "Italia",
+      "date": "10/02/2026, 16:59:27"
+    }
+  ]
+}
